@@ -1,0 +1,70 @@
+# OpenCode Go Usage
+
+A lightweight [OpenCode](https://opencode.ai) TUI sidebar plugin that displays your **OpenCode Go** subscription quota (`5h` rolling, `wk` weekly, and `mo` monthly) alongside a **theoretical time-progress marker (`┃`)** so you can tell at a glance whether your actual consumption is ahead of or behind schedule.
+
+一个轻量级的 OpenCode TUI 侧边栏插件，实时展示 **OpenCode Go** 套餐的三个额度窗口（5 小时滚动 / 周度 / 月度），并在进度条上用竖线 `┃` 标出**按时间折算的理论进度**，一眼看出实际消耗是超前还是落后于时间进度。
+
+---
+
+## Preview / 预览
+
+| Dark Mode | Light Mode |
+| :---: | :---: |
+| ![Dark Mode](./assets/dark.png) | ![Light Mode](./assets/light.png) |
+
+```text
+ Go Usage                   $8.32/$60
+
+5h ██░░░░░░░░░░░░░░░░┃░ 12%     15m
+wk ███░░░░┃░░░░░░░░░░░░ 13%  4d 12h
+mo ███░░┃░░░░░░░░░░░░░░ 14% 22d 13h
+```
+
+- **Header (`Go Usage` + `$used/$limit`)**: Monthly spent and total cap, styled with your active TUI theme's accent badge (automatically adapts to dark & light themes, matching Magic Context).
+- **`█` Filled cells**: Actual quota spent in the window (`5h`, `wk`, `mo`). Turns warning/error-colored above 75% / 90%.
+- **`┃` Vertical tick**: Theoretical progress based on elapsed time in that window (`(now - startsAt) / (resetsAt - startsAt)`).
+  - Filled bar **left** of `┃` → spending slower than time elapsed (safe pace).
+  - Filled bar **right** of `┃` → spending faster than time elapsed.
+- **Right columns**: Actual used percentage and remaining time until the window resets (hour precision).
+
+---
+
+## Prerequisites / 前置条件
+
+1. OpenCode **V2** (`>= 2.0`) with an active **OpenCode Go** subscription.
+2. Logged into **OpenCode Console** via `/connect` in the TUI (the plugin reads the local `opencode` Console credential via `context.client.credential.list()`).
+
+---
+
+## Installation / 安装方法
+
+OpenCode automatically discovers local plugins placed under `~/.config/opencode/plugins/<name>/tui.tsx` — no `cli.json` edits required.
+
+OpenCode 会自动扫描 `~/.config/opencode/plugins/<目录>/tui.tsx` 下的本地插件，无需修改配置文件，放好文件重开 TUI 即生效：
+
+```bash
+git clone https://github.com/bazuhq/opencode-go-usage.git ~/.config/opencode/plugins/go-usage
+```
+
+Or copy [`tui.tsx`](./tui.tsx) directly into `~/.config/opencode/plugins/go-usage/tui.tsx` and restart OpenCode TUI.
+
+---
+
+## How It Works & Privacy / 原理与隐私说明
+
+- **Single file, zero external dependencies**: [`tui.tsx`](./tui.tsx) uses only `@opencode/plugin/tui` and `solid-js` provided by the OpenCode runtime.
+- **Read-only & local**: Reads your local Console token in memory from the OpenCode client and sends a `GET` request directly to `https://opencode.ai/console/api/go/status` every 60 seconds and after each completed turn (`session.execution.succeeded`). No data is written to disk or sent anywhere else.
+
+---
+
+## Disclaimer / 免责声明
+
+This plugin queries OpenCode Console's internal `/console/api/go/status` endpoint, which is not a public, versioned API. If OpenCode changes that endpoint or its authentication flow in a future release, the widget will simply display `offline` or `/connect to re-link` without affecting your session. Shared as-is for personal convenience, with no maintenance guarantees.
+
+本插件调用的是 OpenCode Console 网页端自用的内部接口 `/console/api/go/status`（非官方公开承诺稳定的 API）。若未来官方调整接口或鉴权方式，插件只会安静回退显示 `offline`，不影响正常对话。纯个人自用顺手分享，随缘维护。
+
+---
+
+## License
+
+[MIT](./LICENSE)
