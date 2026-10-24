@@ -10,7 +10,7 @@ A lightweight [OpenCode](https://opencode.ai) TUI sidebar plugin that displays y
 
 | Dark Mode | Light Mode |
 | :---: | :---: |
-| ![Dark Mode](./assets/dark.png?v=2) | ![Light Mode](./assets/light.png?v=2) |
+| ![Dark Mode](./assets/preview-dark.png) | ![Light Mode](./assets/preview-light.png) |
 
 Preview values are illustrative, not live account data. Regenerate both images with `python3 scripts/render_preview.py` (requires Pillow).
 

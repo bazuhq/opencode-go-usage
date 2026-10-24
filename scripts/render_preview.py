@@ -210,7 +210,7 @@ def main() -> None:
     assets = root / "assets"
     assets.mkdir(exist_ok=True)
     for mode in ("dark", "light"):
-        render(mode, assets / f"{mode}.png")
+        render(mode, assets / f"preview-{mode}.png")
 
 
 if __name__ == "__main__":
