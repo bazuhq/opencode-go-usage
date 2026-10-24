@@ -33,6 +33,11 @@ const PACE_START_USED_PCT = 10
 // Hue and lightness are preserved, so only the vividness changes.
 const FILL_SATURATION = 0.4
 const TEXT_SATURATION = 0.7
+// The header badge is a brand element, not a status colour. A soft sky blue
+// with deep-navy ink stays friendly on both light and dark themes and does not
+// compete with the green/yellow/red meter.
+const BADGE_BG = "#7faedb"
+const BADGE_INK = "#0f1b2d"
 
 const FIVE_HOUR_MS = 5 * 3_600_000
 const WEEK_MS = 7 * 86_400_000
@@ -247,7 +252,6 @@ function palette(theme: any) {
   return {
     muted: theme?.text?.muted ?? "#808080",
     strong: theme?.text?.base ?? "#eeeeee",
-    panel: theme?.background?.base ?? "#000000",
     success: theme?.text?.feedback?.success?.base ?? "#4e9a63",
     warning: theme?.text?.feedback?.warning?.base ?? "#f5a742",
     error: theme?.text?.feedback?.error?.base ?? "#e06c75",
@@ -360,8 +364,8 @@ export default Plugin.define({
             alignItems="center"
             marginBottom={1}
           >
-            <box paddingLeft={1} paddingRight={1} backgroundColor={colors.strong}>
-              <text fg={colors.panel}>
+            <box paddingLeft={1} paddingRight={1} backgroundColor={BADGE_BG}>
+              <text fg={BADGE_INK}>
                 <b>Go Usage</b>
               </text>
             </box>
@@ -402,8 +406,8 @@ export default Plugin.define({
             ) : (
               <box width="100%" flexDirection="column" marginTop={1}>
                 <box width="100%" flexDirection="row" marginBottom={1}>
-                  <box paddingLeft={1} paddingRight={1} backgroundColor={colors.strong}>
-                    <text fg={colors.panel}>
+                  <box paddingLeft={1} paddingRight={1} backgroundColor={BADGE_BG}>
+                    <text fg={BADGE_INK}>
                       <b>Go Usage</b>
                     </text>
                   </box>

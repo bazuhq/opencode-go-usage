@@ -20,7 +20,7 @@ wk ███░░░░┃░░░░░░░░░░░░ 13%  4d 12h
 mo ███░░┃░░░░░░░░░░░░░░ 14% 22d 13h
 ```
 
-- **Header (`Go Usage` + `$used/$limit`)**: Monthly spent and total cap, on a neutral `text.base` badge with a `background.base` label, so the header never competes with a status colour.
+- **Header (`Go Usage` + `$used/$limit`)**: Monthly spent and total cap, on a soft-blue brand badge (`#7faedb` with `#0f1b2d` ink) so the header never competes with a status colour.
 - **Two independent colour channels**:
   - **Percentage text = quota pressure.** Green below 75%, yellow from 75% to 90%, red at 90% and above. Warning and error values are drawn bold.
   - **Bar fill = pace.** Green when usage is more than 2 percentage points behind the `┃` line, yellow when within 2 points (including exactly on the line), red once usage passes the line. During the first 5% of a window the bar stays green while usage is below 10%, so one early request does not flash red.
