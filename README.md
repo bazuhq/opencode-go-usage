@@ -20,13 +20,15 @@ wk ███░░░░┃░░░░░░░░░░░░ 13%  4d 12h
 mo ███░░┃░░░░░░░░░░░░░░ 14% 22d 13h
 ```
 
-- **Header (`Go Usage` + `$used/$limit`)**: Monthly spent and total cap, in a solid badge drawn from the theme's `text.feedback.success` (normal) token, desaturated so the header does not compete with a warning state.
-- **`█` Filled cells**: Actual quota spent in the window (`5h`, `wk`, `mo`). Green when safe, yellow when the quota is above 75% **or** within 2 percentage points of the `┃` line, red when above 90% **or** past the `┃` line. Fill and percentage text are HSL-desaturated (fill keeps 45% of the theme token's saturation, text 80%) so a full-width bar reads as a muted status colour instead of a neon block.
-- **Colour source**: `text.feedback.success` / `warning` / `error` from the active theme. Hue and lightness are preserved; only saturation is scaled, so the meter follows dark and light themes without hard-coded hex values.
+- **Header (`Go Usage` + `$used/$limit`)**: Monthly spent and total cap, on a neutral `text.base` badge with a `background.base` label, so the header never competes with a status colour.
+- **Two independent colour channels**:
+  - **Percentage text = quota pressure.** Green below 75%, yellow from 75% to 90%, red at 90% and above. Warning and error values are drawn bold.
+  - **Bar fill = pace.** Green when usage is more than 2 percentage points behind the `┃` line, yellow when within 2 points (including exactly on the line), red once usage passes the line. During the first 5% of a window the bar stays green while usage is below 10%, so one early request does not flash red.
+- **Colour source**: `text.feedback.success` / `warning` / `error` from the active theme. The fill keeps 40% of the token's HSL saturation and the percentage text keeps 70%; hue and lightness are preserved, so both channels follow dark and light themes without hard-coded hex values.
 - **`┃` Vertical tick**: Theoretical progress based on elapsed time in that window (`(now - startsAt) / (resetsAt - startsAt)`).
   - Filled bar **left** of `┃` → spending slower than time elapsed (safe pace).
   - Filled bar **right** of `┃` → spending faster than time elapsed.
-  - The 2-point pace band is measured in percentage points (`used% - theory%`), not bar cells. At 20 cells wide one cell is 5 points, so the color can turn before the fill visibly touches `┃`.
+  - The 2-point pace band is measured in percentage points (`used% - theory%`), not bar cells. At 20 cells wide one cell is 5 points, so the bar can turn yellow before the fill visibly touches `┃`.
 - **Right columns**: Actual used percentage and remaining time until the window resets (hour precision).
 
 ---

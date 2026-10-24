@@ -19,15 +19,20 @@ const REFRESH_MS = 60_000
 const FETCH_TIMEOUT_MS = 8_000
 const BAR_WIDTH = 20
 // Percentage points below the theoretical line that still count as "about to
-// reach the pace" and paint the meter with the warning color.
+// reach the pace" and paint the bar with the warning colour.
 const PACE_WARN_GAP_PCT = 2
+// The first minutes of a window have too little history for a pace reading:
+// 2% used against 1% elapsed would paint the bar red. Until the window has
+// meaningfully started, the bar stays green unless usage itself is already
+// high enough to be a real burst.
+const PACE_START_THEORY_PCT = 5
+const PACE_START_USED_PCT = 10
 // Saturation kept from the theme's feedback tokens when drawing the meter.
 // A full-width 20-cell block of the raw token glares in the sidebar, while the
 // three-character percentage still needs enough colour to read as a status.
 // Hue and lightness are preserved, so only the vividness changes.
-const FILL_SATURATION = 0.45
-const TEXT_SATURATION = 0.8
-const BADGE_SATURATION = 0.4
+const FILL_SATURATION = 0.4
+const TEXT_SATURATION = 0.7
 
 const FIVE_HOUR_MS = 5 * 3_600_000
 const WEEK_MS = 7 * 86_400_000
@@ -210,17 +215,16 @@ function buildRow(
   }
 }
 
-function toneLevel(row: Row): 0 | 1 | 2 {
-  const quota = !Number.isFinite(row.pct) ? 0 : row.pct >= 90 ? 2 : row.pct >= 75 ? 1 : 0
-  const pace =
-    !Number.isFinite(row.pct) || !Number.isFinite(row.theory)
-      ? 0
-      : row.pct > row.theory
-        ? 2
-        : row.theory - row.pct <= PACE_WARN_GAP_PCT
-          ? 1
-          : 0
-  return Math.max(quota, pace) as 0 | 1 | 2
+function quotaLevel(row: Row): 0 | 1 | 2 {
+  if (!Number.isFinite(row.pct)) return 0
+  return row.pct >= 90 ? 2 : row.pct >= 75 ? 1 : 0
+}
+
+function paceLevel(row: Row): 0 | 1 | 2 {
+  if (!Number.isFinite(row.pct) || !Number.isFinite(row.theory)) return 0
+  if (row.theory < PACE_START_THEORY_PCT && row.pct < PACE_START_USED_PCT) return 0
+  if (row.pct > row.theory) return 2
+  return row.theory - row.pct <= PACE_WARN_GAP_PCT ? 1 : 0
 }
 
 function barRuns(row: Row, fillColor: any, trackColor: any, markerColor: any) {
@@ -339,7 +343,6 @@ export default Plugin.define({
 
     const Meters = (props: { status: GoStatus }) => {
       const colors = palette(context.theme)
-      const badge = desaturate(colors.success, BADGE_SATURATION)
       const access = props.status.access
       const meters = access?.meters
       const rows = [
@@ -357,7 +360,7 @@ export default Plugin.define({
             alignItems="center"
             marginBottom={1}
           >
-            <box paddingLeft={1} paddingRight={1} backgroundColor={badge}>
+            <box paddingLeft={1} paddingRight={1} backgroundColor={colors.strong}>
               <text fg={colors.panel}>
                 <b>Go Usage</b>
               </text>
@@ -365,10 +368,12 @@ export default Plugin.define({
             <text fg={colors.muted}>{month}</text>
           </box>
           {rows.map((row) => {
-            const level = toneLevel(row)
-            const tone = level === 2 ? colors.error : level === 1 ? colors.warning : colors.success
-            const barTone = desaturate(tone, FILL_SATURATION)
-            const textTone = desaturate(tone, TEXT_SATURATION)
+            const quota = quotaLevel(row)
+            const pace = paceLevel(row)
+            const quotaTone = quota === 2 ? colors.error : quota === 1 ? colors.warning : colors.success
+            const paceTone = pace === 2 ? colors.error : pace === 1 ? colors.warning : colors.success
+            const barTone = desaturate(paceTone, FILL_SATURATION)
+            const textTone = desaturate(quotaTone, TEXT_SATURATION)
             const pctText = Number.isFinite(row.pct) ? `${Math.round(row.pct)}%` : "—"
             return (
               <box flexDirection="row" height={1}>
@@ -376,7 +381,9 @@ export default Plugin.define({
                 {barRuns(row, barTone, colors.muted, colors.strong).map((run) => (
                   <text fg={run.color}>{run.text}</text>
                 ))}
-                <text fg={textTone}>{pctText.padStart(4)}</text>
+                <text fg={textTone}>
+                  {quota > 0 ? <b>{pctText.padStart(4)}</b> : pctText.padStart(4)}
+                </text>
                 <text fg={colors.muted}>{row.left.padStart(8)}</text>
               </box>
             )
@@ -387,7 +394,6 @@ export default Plugin.define({
 
     const Usage = () => {
       const colors = palette(context.theme)
-      const badge = desaturate(colors.success, BADGE_SATURATION)
       return (
         <Show when={snapshot()} keyed>
           {(s: Snapshot) =>
@@ -396,7 +402,7 @@ export default Plugin.define({
             ) : (
               <box width="100%" flexDirection="column" marginTop={1}>
                 <box width="100%" flexDirection="row" marginBottom={1}>
-                  <box paddingLeft={1} paddingRight={1} backgroundColor={badge}>
+                  <box paddingLeft={1} paddingRight={1} backgroundColor={colors.strong}>
                     <text fg={colors.panel}>
                       <b>Go Usage</b>
                     </text>
