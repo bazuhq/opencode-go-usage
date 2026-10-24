@@ -12,12 +12,14 @@ A lightweight [OpenCode](https://opencode.ai) TUI sidebar plugin that displays y
 | :---: | :---: |
 | ![Dark Mode](./assets/dark.png) | ![Light Mode](./assets/light.png) |
 
-```text
- Go Usage                   $8.32/$60
+Preview values are illustrative, not live account data. Regenerate both images with `python3 scripts/render_preview.py` (requires Pillow).
 
-5h ██░░░░░░░░░░░░░░░░┃░ 12%     15m
-wk ███░░░░┃░░░░░░░░░░░░ 13%  4d 12h
-mo ███░░┃░░░░░░░░░░░░░░ 14% 22d 13h
+```text
+ Go Usage                   $54.60/$60
+
+5h ██████┃████░░░░░░░░░ 54%  1h 12m
+wk ███████████████┃░░░░ 76%  4d 12h
+mo ██████████████████┃░ 91% 22d 13h
 ```
 
 - **Header (`Go Usage` + `$used/$limit`)**: Monthly spent and total cap, on a blue brand badge (`#4678ac` with white ink, 4.62:1 contrast) so the header never competes with a status colour.
