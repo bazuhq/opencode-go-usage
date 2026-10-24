@@ -21,10 +21,13 @@ const BAR_WIDTH = 20
 // Percentage points below the theoretical line that still count as "about to
 // reach the pace" and paint the meter with the warning color.
 const PACE_WARN_GAP_PCT = 2
-// How far warning/error fills are blended toward the theme's muted color. A
-// full-width bar of the raw feedback color is too saturated to sit in the
-// sidebar; the percentage text keeps the unblended tone.
-const SOFTEN_RATIO = 0.35
+// Saturation kept from the theme's feedback tokens when drawing the meter.
+// A full-width 20-cell block of the raw token glares in the sidebar, while the
+// three-character percentage still needs enough colour to read as a status.
+// Hue and lightness are preserved, so only the vividness changes.
+const FILL_SATURATION = 0.45
+const TEXT_SATURATION = 0.8
+const BADGE_SATURATION = 0.4
 
 const FIVE_HOUR_MS = 5 * 3_600_000
 const WEEK_MS = 7 * 86_400_000
@@ -118,12 +121,47 @@ function rgb(color: any): [number, number, number] | null {
   return null
 }
 
-function soften(color: any, neutral: any, ratio = SOFTEN_RATIO): any {
-  const a = rgb(color)
-  const b = rgb(neutral)
-  if (!a || !b) return color
-  const mix = (i: number) => Math.round(a[i] * (1 - ratio) + b[i] * ratio)
-  return `#${[mix(0), mix(1), mix(2)].map((n) => n.toString(16).padStart(2, "0")).join("")}`
+function toHex(r: number, g: number, b: number): string {
+  return `#${[r, g, b].map((n) => Math.round(n).toString(16).padStart(2, "0")).join("")}`
+}
+
+/**
+ * Scale a colour's HSL saturation by `keep`, leaving hue and lightness alone.
+ * The theme's feedback tokens are picked for short text at full strength; the
+ * meter needs the same hue with less glare. Returns the input unchanged when it
+ * is not a colour this plugin can parse.
+ */
+function desaturate(color: any, keep: number): any {
+  const channels = rgb(color)
+  if (!channels) return color
+  const [r, g, b] = channels.map((n) => n / 255)
+  const max = Math.max(r, g, b)
+  const min = Math.min(r, g, b)
+  const l = (max + min) / 2
+  const delta = max - min
+  if (delta === 0) return color
+  const s = delta / (1 - Math.abs(2 * l - 1))
+  let h: number
+  if (max === r) h = ((g - b) / delta) % 6
+  else if (max === g) h = (b - r) / delta + 2
+  else h = (r - g) / delta + 4
+  h *= 60
+  if (h < 0) h += 360
+
+  const s2 = Math.max(0, Math.min(1, s * keep))
+  const c = (1 - Math.abs(2 * l - 1)) * s2
+  const x = c * (1 - Math.abs(((h / 60) % 2) - 1))
+  const m = l - c / 2
+  let r2 = 0
+  let g2 = 0
+  let b2 = 0
+  if (h < 60) [r2, g2, b2] = [c, x, 0]
+  else if (h < 120) [r2, g2, b2] = [x, c, 0]
+  else if (h < 180) [r2, g2, b2] = [0, c, x]
+  else if (h < 240) [r2, g2, b2] = [0, x, c]
+  else if (h < 300) [r2, g2, b2] = [x, 0, c]
+  else [r2, g2, b2] = [c, 0, x]
+  return toHex((r2 + m) * 255, (g2 + m) * 255, (b2 + m) * 255)
 }
 
 type Row = {
@@ -205,11 +243,8 @@ function palette(theme: any) {
   return {
     muted: theme?.text?.muted ?? "#808080",
     strong: theme?.text?.base ?? "#eeeeee",
-    // Magic Context reads the accent at hue step 200, the step OpenCode paints
-    // its own accent UI in. `background.action.primary` is a fill color and is
-    // too saturated to use for text and meter cells.
-    accent: theme?.hue?.accent?.[200] ?? "#5f87ff",
     panel: theme?.background?.base ?? "#000000",
+    success: theme?.text?.feedback?.success?.base ?? "#4e9a63",
     warning: theme?.text?.feedback?.warning?.base ?? "#f5a742",
     error: theme?.text?.feedback?.error?.base ?? "#e06c75",
   }
@@ -304,6 +339,7 @@ export default Plugin.define({
 
     const Meters = (props: { status: GoStatus }) => {
       const colors = palette(context.theme)
+      const badge = desaturate(colors.success, BADGE_SATURATION)
       const access = props.status.access
       const meters = access?.meters
       const rows = [
@@ -321,7 +357,7 @@ export default Plugin.define({
             alignItems="center"
             marginBottom={1}
           >
-            <box paddingLeft={1} paddingRight={1} backgroundColor={colors.accent}>
+            <box paddingLeft={1} paddingRight={1} backgroundColor={badge}>
               <text fg={colors.panel}>
                 <b>Go Usage</b>
               </text>
@@ -330,8 +366,9 @@ export default Plugin.define({
           </box>
           {rows.map((row) => {
             const level = toneLevel(row)
-            const tone = level === 2 ? colors.error : level === 1 ? colors.warning : colors.accent
-            const barTone = level === 0 ? tone : soften(tone, colors.muted)
+            const tone = level === 2 ? colors.error : level === 1 ? colors.warning : colors.success
+            const barTone = desaturate(tone, FILL_SATURATION)
+            const textTone = desaturate(tone, TEXT_SATURATION)
             const pctText = Number.isFinite(row.pct) ? `${Math.round(row.pct)}%` : "—"
             return (
               <box flexDirection="row" height={1}>
@@ -339,7 +376,7 @@ export default Plugin.define({
                 {barRuns(row, barTone, colors.muted, colors.strong).map((run) => (
                   <text fg={run.color}>{run.text}</text>
                 ))}
-                <text fg={tone}>{pctText.padStart(4)}</text>
+                <text fg={textTone}>{pctText.padStart(4)}</text>
                 <text fg={colors.muted}>{row.left.padStart(8)}</text>
               </box>
             )
@@ -350,6 +387,7 @@ export default Plugin.define({
 
     const Usage = () => {
       const colors = palette(context.theme)
+      const badge = desaturate(colors.success, BADGE_SATURATION)
       return (
         <Show when={snapshot()} keyed>
           {(s: Snapshot) =>
@@ -358,7 +396,7 @@ export default Plugin.define({
             ) : (
               <box width="100%" flexDirection="column" marginTop={1}>
                 <box width="100%" flexDirection="row" marginBottom={1}>
-                  <box paddingLeft={1} paddingRight={1} backgroundColor={colors.accent}>
+                  <box paddingLeft={1} paddingRight={1} backgroundColor={badge}>
                     <text fg={colors.panel}>
                       <b>Go Usage</b>
                     </text>

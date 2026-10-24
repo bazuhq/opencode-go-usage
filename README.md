@@ -20,8 +20,9 @@ wk ███░░░░┃░░░░░░░░░░░░ 13%  4d 12h
 mo ███░░┃░░░░░░░░░░░░░░ 14% 22d 13h
 ```
 
-- **Header (`Go Usage` + `$used/$limit`)**: Monthly spent and total cap, styled with your active TUI theme's accent badge (automatically adapts to dark & light themes, matching Magic Context). The accent is `hue.accent[200]`, the same step Magic Context uses; warning/error cells use the host's `text.feedback` tokens.
-- **`█` Filled cells**: Actual quota spent in the window (`5h`, `wk`, `mo`). Color follows the more severe of two signals: quota pressure (warning above 75%, error above 90%) and pace (warning within 2 percentage points of the `┃` line, error once the fill passes it). Warning/error fills are blended 35% toward `text.muted` so a full-width bar does not glare; the percentage text keeps the unblended feedback color.
+- **Header (`Go Usage` + `$used/$limit`)**: Monthly spent and total cap, in a solid badge drawn from the theme's `text.feedback.success` (normal) token, desaturated so the header does not compete with a warning state.
+- **`█` Filled cells**: Actual quota spent in the window (`5h`, `wk`, `mo`). Green when safe, yellow when the quota is above 75% **or** within 2 percentage points of the `┃` line, red when above 90% **or** past the `┃` line. Fill and percentage text are HSL-desaturated (fill keeps 45% of the theme token's saturation, text 80%) so a full-width bar reads as a muted status colour instead of a neon block.
+- **Colour source**: `text.feedback.success` / `warning` / `error` from the active theme. Hue and lightness are preserved; only saturation is scaled, so the meter follows dark and light themes without hard-coded hex values.
 - **`┃` Vertical tick**: Theoretical progress based on elapsed time in that window (`(now - startsAt) / (resetsAt - startsAt)`).
   - Filled bar **left** of `┃` → spending slower than time elapsed (safe pace).
   - Filled bar **right** of `┃` → spending faster than time elapsed.
