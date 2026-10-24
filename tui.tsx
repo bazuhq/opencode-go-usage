@@ -33,11 +33,11 @@ const PACE_START_USED_PCT = 10
 // Hue and lightness are preserved, so only the vividness changes.
 const FILL_SATURATION = 0.4
 const TEXT_SATURATION = 0.7
-// The header badge is a brand element, not a status colour. A soft sky blue
-// with deep-navy ink stays friendly on both light and dark themes and does not
-// compete with the green/yellow/red meter.
-const BADGE_BG = "#7faedb"
-const BADGE_INK = "#0f1b2d"
+// The header badge is a brand element, not a status colour. A medium steel
+// blue with white ink keeps the classic blue-chip look without the weight of
+// black, on both light and dark themes.
+const BADGE_BG = "#4678ac"
+const BADGE_INK = "#ffffff"
 
 const FIVE_HOUR_MS = 5 * 3_600_000
 const WEEK_MS = 7 * 86_400_000
