@@ -171,7 +171,10 @@ function palette(theme: any) {
   return {
     muted: theme?.text?.muted ?? "#808080",
     strong: theme?.text?.base ?? "#eeeeee",
-    accent: theme?.background?.action?.primary?.focused ?? "#fab283",
+    // Magic Context reads the accent at hue step 200, the step OpenCode paints
+    // its own accent UI in. `background.action.primary` is a fill color and is
+    // too saturated to use for text and meter cells.
+    accent: theme?.hue?.accent?.[200] ?? "#5f87ff",
     panel: theme?.background?.base ?? "#000000",
     warning: theme?.text?.feedback?.warning?.base ?? "#f5a742",
     error: theme?.text?.feedback?.error?.base ?? "#e06c75",
