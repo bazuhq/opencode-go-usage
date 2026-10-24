@@ -21,6 +21,10 @@ const BAR_WIDTH = 20
 // Percentage points below the theoretical line that still count as "about to
 // reach the pace" and paint the meter with the warning color.
 const PACE_WARN_GAP_PCT = 2
+// How far warning/error fills are blended toward the theme's muted color. A
+// full-width bar of the raw feedback color is too saturated to sit in the
+// sidebar; the percentage text keeps the unblended tone.
+const SOFTEN_RATIO = 0.35
 
 const FIVE_HOUR_MS = 5 * 3_600_000
 const WEEK_MS = 7 * 86_400_000
@@ -90,6 +94,36 @@ function until(endMs: number, nowMs: number): string {
 
 function clamp(n: number, lo: number, hi: number): number {
   return Math.max(lo, Math.min(hi, n))
+}
+
+function rgb(color: any): [number, number, number] | null {
+  if (typeof color === "string") {
+    const match = color.match(/^#([0-9a-f]{3}|[0-9a-f]{6}|[0-9a-f]{8})$/i)
+    if (!match) return null
+    let hex = match[1]
+    if (hex.length === 3) hex = hex.split("").map((c) => c + c).join("")
+    return [
+      parseInt(hex.slice(0, 2), 16),
+      parseInt(hex.slice(2, 4), 16),
+      parseInt(hex.slice(4, 6), 16),
+    ]
+  }
+  if (color && typeof color === "object") {
+    if (typeof color.rgba === "string") return rgb(color.rgba)
+    if ([color.r, color.g, color.b].every((n) => typeof n === "number")) {
+      const scale = color.r <= 1 && color.g <= 1 && color.b <= 1 ? 255 : 1
+      return [Math.round(color.r * scale), Math.round(color.g * scale), Math.round(color.b * scale)]
+    }
+  }
+  return null
+}
+
+function soften(color: any, neutral: any, ratio = SOFTEN_RATIO): any {
+  const a = rgb(color)
+  const b = rgb(neutral)
+  if (!a || !b) return color
+  const mix = (i: number) => Math.round(a[i] * (1 - ratio) + b[i] * ratio)
+  return `#${[mix(0), mix(1), mix(2)].map((n) => n.toString(16).padStart(2, "0")).join("")}`
 }
 
 type Row = {
@@ -297,11 +331,12 @@ export default Plugin.define({
           {rows.map((row) => {
             const level = toneLevel(row)
             const tone = level === 2 ? colors.error : level === 1 ? colors.warning : colors.accent
+            const barTone = level === 0 ? tone : soften(tone, colors.muted)
             const pctText = Number.isFinite(row.pct) ? `${Math.round(row.pct)}%` : "—"
             return (
               <box flexDirection="row" height={1}>
                 <text fg={colors.muted}>{row.label.padEnd(3)}</text>
-                {barRuns(row, tone, colors.muted, colors.strong).map((run) => (
+                {barRuns(row, barTone, colors.muted, colors.strong).map((run) => (
                   <text fg={run.color}>{run.text}</text>
                 ))}
                 <text fg={tone}>{pctText.padStart(4)}</text>

@@ -21,7 +21,7 @@ mo ███░░┃░░░░░░░░░░░░░░ 14% 22d 13h
 ```
 
 - **Header (`Go Usage` + `$used/$limit`)**: Monthly spent and total cap, styled with your active TUI theme's accent badge (automatically adapts to dark & light themes, matching Magic Context). The accent is `hue.accent[200]`, the same step Magic Context uses; warning/error cells use the host's `text.feedback` tokens.
-- **`█` Filled cells**: Actual quota spent in the window (`5h`, `wk`, `mo`). Color follows the more severe of two signals: quota pressure (warning above 75%, error above 90%) and pace (warning within 2 percentage points of the `┃` line, error once the fill passes it).
+- **`█` Filled cells**: Actual quota spent in the window (`5h`, `wk`, `mo`). Color follows the more severe of two signals: quota pressure (warning above 75%, error above 90%) and pace (warning within 2 percentage points of the `┃` line, error once the fill passes it). Warning/error fills are blended 35% toward `text.muted` so a full-width bar does not glare; the percentage text keeps the unblended feedback color.
 - **`┃` Vertical tick**: Theoretical progress based on elapsed time in that window (`(now - startsAt) / (resetsAt - startsAt)`).
   - Filled bar **left** of `┃` → spending slower than time elapsed (safe pace).
   - Filled bar **right** of `┃` → spending faster than time elapsed.
