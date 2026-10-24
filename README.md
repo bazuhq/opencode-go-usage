@@ -21,10 +21,11 @@ mo ███░░┃░░░░░░░░░░░░░░ 14% 22d 13h
 ```
 
 - **Header (`Go Usage` + `$used/$limit`)**: Monthly spent and total cap, styled with your active TUI theme's accent badge (automatically adapts to dark & light themes, matching Magic Context).
-- **`█` Filled cells**: Actual quota spent in the window (`5h`, `wk`, `mo`). Turns warning/error-colored above 75% / 90%.
+- **`█` Filled cells**: Actual quota spent in the window (`5h`, `wk`, `mo`). Color follows the more severe of two signals: quota pressure (warning above 75%, error above 90%) and pace (warning within 2 percentage points of the `┃` line, error once the fill passes it).
 - **`┃` Vertical tick**: Theoretical progress based on elapsed time in that window (`(now - startsAt) / (resetsAt - startsAt)`).
   - Filled bar **left** of `┃` → spending slower than time elapsed (safe pace).
   - Filled bar **right** of `┃` → spending faster than time elapsed.
+  - The 2-point pace band is measured in percentage points (`used% - theory%`), not bar cells. At 20 cells wide one cell is 5 points, so the color can turn before the fill visibly touches `┃`.
 - **Right columns**: Actual used percentage and remaining time until the window resets (hour precision).
 
 ---

@@ -18,6 +18,9 @@ const GO_STATUS_URL = "https://opencode.ai/console/api/go/status"
 const REFRESH_MS = 60_000
 const FETCH_TIMEOUT_MS = 8_000
 const BAR_WIDTH = 20
+// Percentage points below the theoretical line that still count as "about to
+// reach the pace" and paint the meter with the warning color.
+const PACE_WARN_GAP_PCT = 2
 
 const FIVE_HOUR_MS = 5 * 3_600_000
 const WEEK_MS = 7 * 86_400_000
@@ -94,6 +97,7 @@ type Row = {
   fill: number
   marker: number
   pct: number
+  theory: number
   left: string
 }
 
@@ -108,7 +112,7 @@ function buildRow(
   // If a rolling/periodic window has already passed its reset timestamp while
   // the session was idle, treat usage as reset (0%) until the next request.
   if (Number.isFinite(endMs) && nowMs >= endMs) {
-    return { label, fill: 0, marker: -1, pct: 0, left: "—" }
+    return { label, fill: 0, marker: -1, pct: 0, theory: NaN, left: "—" }
   }
 
   let startMs = Date.parse(m?.startsAt ?? options.fallbackStartISO ?? "")
@@ -129,8 +133,22 @@ function buildRow(
       ? clamp(Math.round((theory / 100) * (BAR_WIDTH - 1)), 0, BAR_WIDTH - 1)
       : -1,
     pct,
+    theory,
     left: until(endMs, nowMs),
   }
+}
+
+function toneLevel(row: Row): 0 | 1 | 2 {
+  const quota = !Number.isFinite(row.pct) ? 0 : row.pct >= 90 ? 2 : row.pct >= 75 ? 1 : 0
+  const pace =
+    !Number.isFinite(row.pct) || !Number.isFinite(row.theory)
+      ? 0
+      : row.pct > row.theory
+        ? 2
+        : row.theory - row.pct <= PACE_WARN_GAP_PCT
+          ? 1
+          : 0
+  return Math.max(quota, pace) as 0 | 1 | 2
 }
 
 function barRuns(row: Row, fillColor: any, trackColor: any, markerColor: any) {
@@ -274,7 +292,8 @@ export default Plugin.define({
             <text fg={colors.muted}>{month}</text>
           </box>
           {rows.map((row) => {
-            const tone = row.pct >= 90 ? colors.error : row.pct >= 75 ? colors.warning : colors.accent
+            const level = toneLevel(row)
+            const tone = level === 2 ? colors.error : level === 1 ? colors.warning : colors.accent
             const pctText = Number.isFinite(row.pct) ? `${Math.round(row.pct)}%` : "—"
             return (
               <box flexDirection="row" height={1}>
